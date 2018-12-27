@@ -95,7 +95,7 @@ SaddleFreeNewton <- function(L,
 
 
 # Mock test of Sadddle Free Newton.
-Main <- function(){
+TestSFN <- function(){
   # Lambda. Can be anonymous.
   DistanceToPoint <- function(v){
     return ((v[1] + 0.1) ^ 2 + v[2] ^ 2 + (v[3] - 0.1) ^ 2)
