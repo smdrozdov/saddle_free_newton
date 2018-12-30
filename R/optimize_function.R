@@ -23,22 +23,35 @@ OptimizeFunction <- function(L,
   #   epsilon.stop: stop in this case.
   #   learning.rate: 0.1 by default.
   #   EdgeDistance: distance from given point to the domain boundary.
-  shifts <- {}
-  p <- vector(length = input.dimension)
-  for (step in 1:max.steps){
-    if (optimization.method == "GD"){
-      delta <- -t(NumericGradient(p, L, input.dimension, epsilon.shift.input, EdgeDistance))
-    } else if (optimization.method == "SFN"){
-      delta <- ComputeDeltaSaddleFreeNewton(p, L, input.dimension, epsilon.shift.input, EdgeDistance)
-    }
-    # TODO(smdrozdov): else if (optimization.mehtod == "ASFN")...
-    p <- p + delta * learning.rate
 
-    shifts <- c(sqrt(sum(delta * delta)), shifts)
-    s <- sum(shifts[1:10])
-    if (!is.na(s) && s < epsilon.stop) {
-      break
+  p <- vector(length = input.dimension)
+  if (optimization.method == "GD"){
+    # Gradient descent.
+    shifts <- {}
+    for (step in 1:max.steps){
+      delta <- -t(NumericGradient(p, L, input.dimension, epsilon.shift.input, EdgeDistance))
+      p <- p + delta * learning.rate
+      shifts <- c(sqrt(sum(delta * delta)), shifts)
+      s <- sum(shifts[1:10])
+      if (!is.na(s) && s < epsilon.stop) {
+        break
+      }
     }
+  } else if (optimization.method == "SFN"){
+    # Saddle-free Newton.
+    shifts <- {}
+    for (step in 1:max.steps){
+      delta <- ComputeDeltaSaddleFreeNewton(p, L, input.dimension, epsilon.shift.input, EdgeDistance)
+      p <- p + delta * learning.rate
+      shifts <- c(sqrt(sum(delta * delta)), shifts)
+      s <- sum(shifts[1:10])
+      if (!is.na(s) && s < epsilon.stop) {
+        break
+      }
+    }
+  } else if (optimization.method == "ASFN"){
+    # Approximate Saddle-free Newton.
+    #TODO(smdrozdov): Krylov subspace projection.
   }
   return(p)
 }
