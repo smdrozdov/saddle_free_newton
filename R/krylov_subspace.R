@@ -12,7 +12,7 @@ KrylovSubspace <- function(p,
   #   input.dimension: dimension of L input.
   #   epsilon.shift.input: size of step.
   #   EdgeDistance: distance from given point to the domain boundary.
-  #   v: vector to multiply.
+  #   k: Krylov subspace dimension.
 
   res <- vector(length = input.dimension)
 
