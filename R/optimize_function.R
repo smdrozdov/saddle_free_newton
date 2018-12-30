@@ -1,7 +1,8 @@
 # Implementation of Ganguli-Bengio method of non-convex function optimzation.
 # Link to article: https://arxiv.org/abs/1406.2572
 #   TODO(smdrozdov): Introduce default values.
-#   TODO(smdrozdov): Krylov subspace, based on MultiplyHessianVector (Described in Appendix E).
+#   TODO(smdrozdov): Approximate Saddle-Free Newton:
+#                    1. Krylov subspace, based on MultiplyHessianVector (Described in Appendix E).
 #   TODO(smdrozdov): Move tests to new file.
 #   TODO(smdrozdov): Test on non-convex function.
 
@@ -30,6 +31,7 @@ OptimizeFunction <- function(L,
     } else if (optimization.method == "SFN"){
       delta <- ComputeDeltaSaddleFreeNewton(p, L, input.dimension, epsilon.shift.input, EdgeDistance)
     }
+    # TODO(smdrozdov): else if (optimization.mehtod == "ASFN")...
     p <- p + delta * learning.rate
 
     shifts <- c(sqrt(sum(delta * delta)), shifts)
@@ -53,13 +55,16 @@ TestSFN <- function(){
   }
   one <- function(v){ return (1)}
   resGD <- OptimizeFunction(DistanceToPoint, 500, 3, 0.00001, 0.000001, 0.1, one, "GD")
-  resSFN <- OptimizeFunction(DistanceToPoint, 500, 3, 0.00001, 0.000001, 0.1, one, "SFN")
-
   print(resGD)
+
+  resSFN <- OptimizeFunction(DistanceToPoint, 500, 3, 0.00001, 0.000001, 0.1, one, "SFN")
   print(resSFN)
 
   Hv <- MultiplyHessianVector(c(1,1,1), DistanceToPoint, 3, 0.0001, one, c(1,1,-1))
   print(Hv)
+
+  KS <- KrylovSubspace(c(1,1,1), DistanceToPoint, 3, 0.0001, one, c(1,1,1), 3)
+  print(KS)
 }
 
 
