@@ -1,8 +1,7 @@
 # Implementation of Ganguli-Bengio method of non-convex function optimzation.
 # Link to article: https://arxiv.org/abs/1406.2572
 #   TODO(smdrozdov): Introduce default values.
-#   TODO(smdrozdov): Lanczosh vector procedures.
-#   TODO(smdrozdov): Several methods with different stopping strategies.
+#   TODO(smdrozdov): Krylov subspace, based on MultiplyHessianVector (Described in Appendix E).
 #   TODO(smdrozdov): Move tests to new file.
 #   TODO(smdrozdov): Test on non-convex function.
 
@@ -14,7 +13,7 @@ OptimizeFunction <- function(L,
                              learning.rate,
                              EdgeDistance,
                              optimization.method){
-  # Calcuates global minimum of function defined in euclidian space.
+  # Calculates global minimum of function defined in euclidian space.
   # Args:
   #   L: function to be optimized, takes vector as input.
   #   max.steps: amount of steps, set to 500 by default.
@@ -27,7 +26,7 @@ OptimizeFunction <- function(L,
   p <- vector(length = input.dimension)
   for (step in 1:max.steps){
     if (optimization.method == "GD"){
-      delta <- ComputeDeltaGradientDescent(p, L, input.dimension, epsilon.shift.input, EdgeDistance)
+      delta <- -t(NumericGradient(p, L, input.dimension, epsilon.shift.input, EdgeDistance))
     } else if (optimization.method == "SFN"){
       delta <- ComputeDeltaSaddleFreeNewton(p, L, input.dimension, epsilon.shift.input, EdgeDistance)
     }
@@ -58,6 +57,9 @@ TestSFN <- function(){
 
   print(resGD)
   print(resSFN)
+
+  Hv <- MultiplyHessianVector(c(1,1,1), DistanceToPoint, 3, 0.0001, one, c(1,1,-1))
+  print(Hv)
 }
 
 
