@@ -2,7 +2,7 @@
 # Link to article: https://arxiv.org/abs/1406.2572
 #   TODO(smdrozdov): Introduce default values.
 #   TODO(smdrozdov): Approximate Saddle-Free Newton:
-#                    1. Krylov subspace, based on MultiplyHessianVector (Described in Appendix E).
+#                    1. Project into Krylov subspace in optimize.funciton.
 #   TODO(smdrozdov): Move tests to new file.
 #   TODO(smdrozdov): Test on non-convex function.
 
