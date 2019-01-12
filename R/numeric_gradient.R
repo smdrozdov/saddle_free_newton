@@ -1,25 +1,17 @@
-NumericGradient <- function(p,
-                            L,
-                            input.dimension,
-                            epsilon.shift.input,
-                            EdgeDistance){
+NumericGradient <- function(point.container){
   # Computes numeric gradient.
   # Args:
-  #   p: initial point.
-  #   L: function to be optimized, takes vector as input.
-  #   input.dimension: dimension of L input.
-  #   epsilon.shift.input: size of step.
-  #   EdgeDistance: distance from given point to the domain boundary.
+  #   point.container: point and function.
 
-  epsilon.shift <- min(epsilon.shift.input, EdgeDistance(p) / exp(1))
-  gradient <- vector(length = input.dimension)
-  for (i in 1:input.dimension){
-    p.increase.i <- p
-    p.increase.i[i] <- p[i] + epsilon.shift
+  epsilon.shift <- min(point.container$epsilon.shift.input, point.container$EdgeDistance(point.container$p) / exp(1))
+  gradient <- vector(length = point.container$input.dimension)
+  for (i in 1:point.container$input.dimension){
+    p.increase.i <- point.container$p
+    p.increase.i[i] <- point.container$p[i] + epsilon.shift
 
-    p.decrease.i <- p
-    p.decrease.i[i] <- p[i] - epsilon.shift
-    gradient[i] <- (L(p.increase.i) - L(p.decrease.i)) / (2 * epsilon.shift)
+    p.decrease.i <- point.container$p
+    p.decrease.i[i] <- point.container$p[i] - epsilon.shift
+    gradient[i] <- (point.container$L(p.increase.i) - point.container$L(p.decrease.i)) / (2 * epsilon.shift)
   }
   return(gradient)
 }

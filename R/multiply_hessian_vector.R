@@ -1,22 +1,17 @@
-MultiplyHessianVector <- function(p,
-                                  L,
-                                  input.dimension,
-                                  epsilon.shift.input,
-                                  EdgeDistance,
+MultiplyHessianVector <- function(point.container,
                                   v){
   # Computes product of hessian and arbitrary vector, Hv, in O(d)-time, where d is domain dimension.
   # See http://www.bcl.hamilton.ie/~barak/papers/nc-hessian.pdf.
   # Args:
-  #   p: initial point.
-  #   L: function to be optimized, takes vector as input.
-  #   input.dimension: dimension of L input.
-  #   epsilon.shift.input: size of step.
-  #   EdgeDistance: distance from given point to the domain boundary.
+  #   point.container: point and function.
   #   v: vector to multiply.
-  epsilon.shift <- min(epsilon.shift.input, EdgeDistance(p) / exp(1))
-
-  gradient <- NumericGradient(p, L, input.dimension, epsilon.shift.input, EdgeDistance)
-  gradient.shift <- NumericGradient(p + epsilon.shift * v, L, input.dimension, epsilon.shift.input, EdgeDistance)
+  epsilon.shift <- min(point.container$epsilon.shift.input, point.container$EdgeDistance(point.container$p) / exp(1))
+  print(point.container$p)
+  gradient <- NumericGradient(point.container)
+  delta <- epsilon.shift * v
+  point.container$p <- as.vector(point.container$p + delta)
+  gradient.shift <- NumericGradient(point.container)
+  point.container$p <- as.vector(point.container$p - delta)
 
   return ((gradient.shift - gradient) / epsilon.shift)
 }
