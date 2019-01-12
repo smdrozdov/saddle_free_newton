@@ -142,6 +142,43 @@ OptimizeFunction <- function(L,
   return(p)
 }
 
+VectorIsZero <- function(v){
+  if (sum(v ^ 2) < 0.00001) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+TestAll <- function(){
+  point.container <- pointContainer(p = c(0, 0),
+                                    L = function(v) {v[1] + 2 * v[2]},
+                                    input.dimension = 2,
+                                    epsilon.shift.input = 0.00001,
+                                    EdgeDistance = function(v) {1})
+  assert_that(VectorIsZero(NumericGradient(point.container) - c(1, 2)))
+
+  point.container <- pointContainer(p = c(0, 0),
+                                    L = function(v) {v[1] ^ 2 - 2 * v[2] ^ 2},
+                                    input.dimension = 2,
+                                    epsilon.shift.input = 0.00001,
+                                    EdgeDistance = function(v) {1})
+  assert_that(VectorIsZero(NumericHessian(point.container) - diag(c(2, -4))))
+
+  point.container <- pointContainer(p = c(pi / 3, pi / 6),
+                                    L = function(v) {sin(v[1]) * cos(v[2])},
+                                    input.dimension = 2,
+                                    epsilon.shift.input = 0.00001,
+                                    EdgeDistance = function(v) {1})
+  assert_that(VectorIsZero(NumericHessian(point.container) - c(c(-0.75, -0.25), c(-0.25, -0.75))))
+
+  point.container <- pointContainer(p = c(1, 0),
+                                    L = function(v) {v[1] ^ 2 - v[1] * v[2] + 2 * v[2] ^ 2},
+                                    input.dimension = 2,
+                                    epsilon.shift.input = 0.00001,
+                                    EdgeDistance = function(v) {1})
+  assert_that(VectorIsZero(MultiplyHessianVector(point.container, c(1, -1)) - c(3, -5)))
+}
 
 # Mock test of Sadddle Free Newton.
 TestSFN <- function(){
