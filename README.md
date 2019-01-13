@@ -10,4 +10,4 @@ minimum drops exponentially quick.
 In 2014 Bengio et al. introduced and proved a novel method, that they called "Saddle-free Newton". It is designed to overcome
 saddle points for an arbitrary function. 
 
-Though this method is very powerful, a public implementation is lacking. This repository is an attempt to fill this gap.
+Though this method is proven powerful (See figure 4 in chapter 7 in https://arxiv.org/abs/1406.2572), a public implementation is lacking. This repository is an attempt to fill this gap.
