@@ -1,6 +1,6 @@
 # Saddle-free Newton.
 
-Assume f is a C2-smooth function from U \in Rn to R. Given that $argmin(f) \in \int(U)$ find $argmin(f).$
+Assume f is a C2-smooth function from $U \in \mathbb{R}^n$ to $\mathbb{R}$. Given that $\argmin(f) \in \int(U)$ find $\argmin(f).$
 
 This is a common task that is usually solved by Gradient descent, and by Newton method if $f$ is convex.
 However, if $f$ is not convex and has saddle points they are attractors for Gradient descent, which very often stops it from converging.
