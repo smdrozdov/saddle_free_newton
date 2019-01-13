@@ -3,7 +3,7 @@ NumericGradient <- function(point.container){
   # Args:
   #   point.container: point and function.
 
-  epsilon.shift <- min(point.container$epsilon.shift.input, point.container$EdgeDistance(point.container$p) / exp(1))
+  epsilon.shift <- min(point.container$epsilon, point.container$EdgeDistance(point.container$p) / exp(1))
   gradient <- vector(length = point.container$input.dimension)
   for (i in 1:point.container$input.dimension){
     p.increase.i <- point.container$p

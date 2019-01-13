@@ -5,7 +5,7 @@ DirectionCurvature <- function(point.container,
   #   point.container: point, function etc.
   #   direction: curvature direction.
 
-  epsilon.shift <- min(point.container$epsilon.shift.input, point.container$EdgeDistance(point.container$p) / exp(1))
+  epsilon.shift <- min(point.container$epsilon, point.container$EdgeDistance(point.container$p) / exp(1))
   direction.normalised <- direction / sqrt(sum(direction * direction))
 
   p.shift.positive <- point.container$p + epsilon.shift * direction.normalised

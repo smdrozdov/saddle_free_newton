@@ -3,7 +3,7 @@ NumericHessian <- function(point.container){
   # Args:
   #   point.container: point and function.
 
-  epsilon.shift <- min(point.container$epsilon.shift.input, point.container$EdgeDistance(point.container$p) / exp(1))
+  epsilon.shift <- min(point.container$epsilon, point.container$EdgeDistance(point.container$p) / exp(1))
   hessian <- matrix(ncol = point.container$input.dimension, nrow = point.container$input.dimension)
   # Compute numeric hessian.
   for (i in 1:point.container$input.dimension){

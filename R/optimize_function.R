@@ -7,19 +7,16 @@
 #                                        takes O(d), where d is domain dimension.
 #   P0 TODO(smdrozdov): Port to Python.
 #   P1 TODO(smdrozdov): Test Krylov subspace with Direction curvature.
-#   P2 TODO(smdrozdov): Approximate Saddle-Free Newton:
-#                    1. Project into Krylov subspace in optimize.funciton.
+
 #   TODO(smdrozdov): Krylov subspace unstable if gradient is exactly zero.
-#   TODO(smdrozdov): Switch to Python/Tensorflow.
 #   TODO(smdrozdov): Switch from point.container to function.container.
-#   TODO(smdrozdov): Rename epsilon.shift.input into epsilon.
 #   TODO(smdrozdov): Add previous delta to Krylov.
 #   TODO(smdrozdov): Optimize in the subspace.
 
 OptimizeFunction <- function(L,
                              max.steps,
                              input.dimension,
-                             epsilon.shift.input,
+                             epsilon,
                              epsilon.stop,
                              learning.rate,
                              EdgeDistance,
@@ -31,13 +28,12 @@ OptimizeFunction <- function(L,
   #   L: function to be optimized, takes vector as input.
   #   max.steps: amount of steps, set to 500 by default.
   #   input.dimension: dimension of L input.
-  #   epsilon.shift.input: size of step.
+  #   epsilon: size of step.
   #   epsilon.stop: stop in this case.
   #   learning.rate: 0.1 by default.
   #   EdgeDistance: distance from given point to the domain boundary.
   #   optimization.mehtod: GD, SFN or ASFN.
   #   k: Krylov subspace dimension in ASFN.
-  #   m: amount of subcycle iterations in ASFN.
 
   p <- numeric(input.dimension)
   if (optimization.method == "GD"){
@@ -48,7 +44,7 @@ OptimizeFunction <- function(L,
       point.container <- pointContainer(p = p,
                                         L = L,
                                         input.dimension = input.dimension,
-                                        epsilon.shift.input = epsilon.shift.input,
+                                        epsilon = epsilon,
                                         EdgeDistance = EdgeDistance)
       delta <- -t(NumericGradient(point.container))
       p <- p + delta * learning.rate
@@ -66,10 +62,10 @@ OptimizeFunction <- function(L,
       point.container <- pointContainer(p = p,
                                         L = L,
                                         input.dimension = input.dimension,
-                                        epsilon.shift.input = epsilon.shift.input,
+                                        epsilon = epsilon,
                                         EdgeDistance = EdgeDistance)
 
-      epsilon.shift <- min(point.container$epsilon.shift.input, point.container$EdgeDistance(point.container$p) / exp(1))
+      epsilon.shift <- min(point.container$epsilon, point.container$EdgeDistance(point.container$p) / exp(1))
       gradient <- NumericGradient(point.container)
       hessian <- NumericHessian(point.container)
 
@@ -98,7 +94,7 @@ OptimizeFunction <- function(L,
       point.container <- pointContainer(p = p,
                                         L = L,
                                         input.dimension = input.dimension,
-                                        epsilon.shift.input = epsilon.shift.input,
+                                        epsilon = epsilon,
                                         EdgeDistance = EdgeDistance)
       gradient <- NumericGradient(point.container)
 
@@ -139,28 +135,28 @@ TestAll <- function(){
   point.container <- pointContainer(p = c(0, 0),
                                     L = function(v) {v[1] + 2 * v[2]},
                                     input.dimension = 2,
-                                    epsilon.shift.input = 0.00001,
+                                    epsilon = 0.00001,
                                     EdgeDistance = function(v) {1})
   assert_that(VectorIsZero(NumericGradient(point.container) - c(1, 2)))
 
   point.container <- pointContainer(p = c(0, 0),
                                     L = function(v) {v[1] ^ 2 - 2 * v[2] ^ 2},
                                     input.dimension = 2,
-                                    epsilon.shift.input = 0.00001,
+                                    epsilon = 0.00001,
                                     EdgeDistance = function(v) {1})
   assert_that(VectorIsZero(NumericHessian(point.container) - diag(c(2, -4))))
 
   point.container <- pointContainer(p = c(pi / 3, pi / 6),
                                     L = function(v) {sin(v[1]) * cos(v[2])},
                                     input.dimension = 2,
-                                    epsilon.shift.input = 0.00001,
+                                    epsilon = 0.00001,
                                     EdgeDistance = function(v) {1})
   assert_that(VectorIsZero(NumericHessian(point.container) - c(c(-0.75, -0.25), c(-0.25, -0.75))))
 
   point.container <- pointContainer(p = c(1, 0),
                                     L = function(v) {v[1] ^ 2 - v[1] * v[2] + 2 * v[2] ^ 2},
                                     input.dimension = 2,
-                                    epsilon.shift.input = 0.00001,
+                                    epsilon = 0.00001,
                                     EdgeDistance = function(v) {1})
   assert_that(VectorIsZero(MultiplyHessianVector(point.container, c(1, -1)) - c(3, -5)))
 
@@ -216,7 +212,7 @@ TestAll <- function(){
   point.container <- pointContainer(p = c(1,1,1),
                                     L = function(v){return ((v[1] + 0.1) ^ 2 + v[2] ^ 2 - (v[3] - 0.1) ^ 2)},
                                     input.dimension = 3,
-                                    epsilon.shift.input = 0.0001,
+                                    epsilon = 0.0001,
                                     EdgeDistance = function(v) {1})
   assert_that(abs(DirectionCurvature(point.container, c(1.0, 0.0, 0.0)) - 2.0) < 0.000001)
   assert_that(abs(DirectionCurvature(point.container, c(1.0, 1.0, 0.0)) - 2.0) < 0.000001)
@@ -232,7 +228,7 @@ TestAll <- function(){
                               0.3,
                               function(v) {1},
                               "ASFN",
-                              3)
+                              2)
   print(resASFN)
 }
 
@@ -242,7 +238,7 @@ TestKrylov <- function(){
   point.container <- pointContainer(p = c(1,1,1,1,1,1,1,1,1,1),
                                     L = function(v){return (v[1] ^ 2 - 2 * v[6] ^ 2 + v[10] ^ 2)},
                                     input.dimension = 10,
-                                    epsilon.shift.input = 0.0001,
+                                    epsilon = 0.0001,
                                     EdgeDistance = function(v) {1})
 
   KS <- KrylovSubspace(point.container, 4)$subspace

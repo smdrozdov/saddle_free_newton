@@ -5,7 +5,7 @@ MultiplyHessianVector <- function(point.container,
   # Args:
   #   point.container: point and function.
   #   v: vector to multiply.
-  epsilon.shift <- min(point.container$epsilon.shift.input, point.container$EdgeDistance(point.container$p) / exp(1))
+  epsilon.shift <- min(point.container$epsilon, point.container$EdgeDistance(point.container$p) / exp(1))
   gradient <- NumericGradient(point.container)
   delta <- epsilon.shift * v
   point.container$p <- as.vector(point.container$p + delta)
