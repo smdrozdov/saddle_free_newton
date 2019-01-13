@@ -11,9 +11,10 @@
 #                    1. Project into Krylov subspace in optimize.funciton.
 #   TODO(smdrozdov): Krylov subspace unstable if gradient is exactly zero.
 #   TODO(smdrozdov): Switch to Python/Tensorflow.
-#   TODO(smdrozdov): Make alpha number, not matrix.
 #   TODO(smdrozdov): Switch from point.container to function.container.
 #   TODO(smdrozdov): Rename epsilon.shift.input into epsilon.
+#   TODO(smdrozdov): Add previous delta to Krylov.
+#   TODO(smdrozdov): Optimize in the subspace.
 
 OptimizeFunction <- function(L,
                              max.steps,
@@ -89,27 +90,21 @@ OptimizeFunction <- function(L,
     }
   } else if (optimization.method == "ASFN"){
     # Approximate Saddle-free Newton.
+    shifts <- {}
     one <- function(v){ return (1)}
-    delta = vector(length = input.dimension)
-    for (j in 1:k){
-      delta[j] = 1
-    }
-    point.container <- pointContainer(p = p,
-                                      L = L,
-                                      input.dimension = input.dimension,
-                                      epsilon.shift.input = epsilon.shift.input,
-                                      EdgeDistance = EdgeDistance)
+
     for (step in 1:max.steps){
       p <- as.vector(p)
-      point.container$p <- p
-      krylov.subspace <- KrylovSubspace(point.container, delta, k)
+      point.container <- pointContainer(p = p,
+                                        L = L,
+                                        input.dimension = input.dimension,
+                                        epsilon.shift.input = epsilon.shift.input,
+                                        EdgeDistance = EdgeDistance)
+      gradient <- NumericGradient(point.container)
+
+      krylov.subspace <- KrylovSubspace(point.container, k)
       V <- krylov.subspace$subspace
       V.multiplied.by.hessian <- krylov.subspace$subspace.multiplied.by.hessian
-
-      L_cap <- function(alpha){
-        return(L(p + alpha %*% V))
-      }
-
       hessian.subspace <- V.multiplied.by.hessian %*% t(V)
 
       # Compute hessian absolute value.
@@ -118,22 +113,13 @@ OptimizeFunction <- function(L,
       values <- ev$values
       hessian.subspace.pos <- vectors %*% diag(abs(values)) %*% t(vectors)
 
-      id <- vector(length = k)
-      for (j in 1:k){
-        id[j] = 1
-      }
-      for (i in 1:m){
-        point.container$p <- as.vector(p)
-        g <- - V %*% NumericGradient(point.container)
-        projection <- function(lambda){
-          return(L_cap(t(g) %*% solve(hessian.subspace.pos + lambda[1] * diag(id))))
-        }
-        print(projection(c(0,0,0)))
-        print(projection(c(0,1,0)))
-        # Here complex number appear due to matrix inversion.
-        lambda.min <- OptimizeFunction(projection, 10, 1, 0.00001, 0.000001, 0.1, one, "GD")
-        delta <- t(g) %*% solve(hessian.subspace.pos + lambda.min[1] * diag(id)) %*% V
-        p <- p + delta
+      delta <- - t(V %*% gradient) %*% solve(hessian.subspace.pos) %*% V
+
+      p <- p + delta * learning.rate
+      shifts <- c(sqrt(sum(delta * delta)), shifts)
+      s <- sum(shifts[1:10])
+      if (!is.na(s) && s < epsilon.stop) {
+        break
       }
     }
 
@@ -236,36 +222,34 @@ TestAll <- function(){
   assert_that(abs(DirectionCurvature(point.container, c(1.0, 1.0, 0.0)) - 2.0) < 0.000001)
   assert_that(abs(DirectionCurvature(point.container, c(0.0, 0.0, 1.0)) + 2.0) < 0.000001)
   assert_that(abs(DirectionCurvature(point.container, c(1.0, 1.0, 1.0)) - 2.0 /3.0) < 0.000001)
+
+
+  resASFN <- OptimizeFunction(function(v) { ((v[1] - 0.1) ^ 2 + 2 * (v[10] + 1.0) ^ 2 + 3 * (v[15] - 1.0) ^ 2) - sin(v[1] * v[15]) ^ 2},
+                              50,
+                              15,
+                              0.00001,
+                              0.000001,
+                              0.3,
+                              function(v) {1},
+                              "ASFN",
+                              3)
+  print(resASFN)
 }
+
 
 TestKrylov <- function(){
-  DistanceToPoint <- function(v){
-    return ((v[1] + 0.1) ^ 2 + v[2] ^ 2 + (v[3] - 0.1) ^ 2)
-  }
-  one <- function(v){ return (1)}
-  point.container <- pointContainer(p = c(1,1,1),
-                                    L = DistanceToPoint,
-                                    input.dimension = 3,
+  # TODO(smdrozdov): Finalize Krylov test.
+  point.container <- pointContainer(p = c(1,1,1,1,1,1,1,1,1,1),
+                                    L = function(v){return (v[1] ^ 2 - 2 * v[6] ^ 2 + v[10] ^ 2)},
+                                    input.dimension = 10,
                                     epsilon.shift.input = 0.0001,
-                                    EdgeDistance = one)
+                                    EdgeDistance = function(v) {1})
 
-  Hv <- MultiplyHessianVector(point.container, c(1,1,-1))
-  print(Hv)
-
-  KS <- KrylovSubspace(point.container, c(1,1,1), 3)$subspace
-  print(KS)
-}
-
-# Mock test of Approximate Saddle-free Newton.
-TestASFN <- function(){
-  # Lambda. Can be anonymous.
-  DistanceToPoint <- function(v){
-    return ((v[1] - 1.0) ^ 2 + v[2] ^ 2 + (v[3] + 1.0) ^ 2)
+  KS <- KrylovSubspace(point.container, 4)$subspace
+  #print(KS)
+  for (i in 1:4){
+    #print(DirectionCurvature(point.container, KS[i,]))
   }
-
-  one <- function(v){ return (1)}
-
-  resSFN <- OptimizeFunction(DistanceToPoint, 3, 3, 0.00001, 0.000001, 0.1, one, "ASFN", 2, 2)
-  print(resSFN)
+  #print(DirectionCurvature(point.container, c(1,0,0,0,0,0,0,0,0,0)))
 }
 
