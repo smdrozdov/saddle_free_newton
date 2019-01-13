@@ -13,6 +13,6 @@ DirectionCurvature <- function(point.container,
 
   curvature <- (point.container$L(p.shift.positive)
                   - 2 * point.container$L(point.container$p)
-                  + point.container$L(p.shift.negative)) / (4 * epsilon.shift ^ 2)
+                  + point.container$L(p.shift.negative)) / (epsilon.shift ^ 2)
   return(curvature)
 }

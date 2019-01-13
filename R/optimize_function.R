@@ -6,15 +6,14 @@
 #                                 ASFN - Approximate Saddle-free Newton. Escapes saddle points,
 #                                        takes O(d), where d is domain dimension.
 #   P0 TODO(smdrozdov): Port to Python.
-#   P0 TODO(smdrozdov): Move tests to new file.
-#   P1 TODO(smdrozdov): Test on non-convex function.
+#   P1 TODO(smdrozdov): Test Krylov subspace with Direction curvature.
 #   P2 TODO(smdrozdov): Approximate Saddle-Free Newton:
 #                    1. Project into Krylov subspace in optimize.funciton.
 #   TODO(smdrozdov): Krylov subspace unstable if gradient is exactly zero.
 #   TODO(smdrozdov): Switch to Python/Tensorflow.
 #   TODO(smdrozdov): Make alpha number, not matrix.
 #   TODO(smdrozdov): Switch from point.container to function.container.
-#   TODO(smdrozdov): Remove ComputeDeltaSaddleFreeNewton.
+#   TODO(smdrozdov): Rename epsilon.shift.input into epsilon.
 
 OptimizeFunction <- function(L,
                              max.steps,
@@ -178,41 +177,65 @@ TestAll <- function(){
                                     epsilon.shift.input = 0.00001,
                                     EdgeDistance = function(v) {1})
   assert_that(VectorIsZero(MultiplyHessianVector(point.container, c(1, -1)) - c(3, -5)))
-}
 
-# Mock test of Sadddle Free Newton.
-TestSFN <- function(){
-  # Lambda. Can be anonymous.
-  DistanceToPoint <- function(v){
-    return ((v[1] + 0.1) ^ 2 + v[2] ^ 2 + (v[3] - 0.1) ^ 2)
-  }
-  DistanceToOrigin <- function(v){
-    return (v[1] ^ 2 + v[2] ^ 2 + v[3] ^ 2 + v[4] ^ 2 + v[5] ^ 2)
-  }
-  CircleDistance <- function(v){
-    return (1 - sqrt(v[1] ^ 2 + v[2] ^ 2 + v[3] ^ 2))
-  }
-  one <- function(v){ return (1)}
-  resGD <- OptimizeFunction(DistanceToPoint, 500, 3, 0.00001, 0.000001, 0.1, one, "GD")
-  print(resGD)
+  result.gradient.descent <- OptimizeFunction(function(v){(v[1] + 0.1) ^ 2 + v[2] ^ 2 + (v[3] - 0.1) ^ 2},
+                            500,
+                            3,
+                            0.00001,
+                            0.000001,
+                            0.1,
+                            function(v) {1},
+                            "GD")
+  assert_that(VectorIsZero(result.gradient.descent - c(-0.1, 0, 0.1)))
 
-  resSFN <- OptimizeFunction(DistanceToPoint, 500, 3, 0.00001, 0.000001, 0.1, one, "SFN")
-  print(resSFN)
-}
+  result.saddle.free.newton <- OptimizeFunction(function(v){(v[1] + 0.1) ^ 2 + v[2] ^ 2 + (v[3] - 0.1) ^ 2},
+                                              500,
+                                              3,
+                                              0.00001,
+                                              0.000001,
+                                              0.1,
+                                              function(v) {1},
+                                              "SFN")
+  assert_that(VectorIsZero(result.saddle.free.newton - c(-0.1, 0, 0.1)))
 
-TestDirectionCurvature <- function(){
-  DistanceToPoint <- function(v){
-    return ((v[1] + 0.1) ^ 2 + v[2] ^ 2 + (v[3] - 0.1) ^ 2)
+  x <- c(0.1, 0.2, 0.4, 0.5)
+  y <- c(0.3, 0.4, 0.5, 0.6)
+  NonConvexFunction <- function(v){
+    a <- v[1]
+    b <- v[2]
+    c <- v[3]
+    d <- v[4]
+    return(sum((exp(- a * x) - exp(- b * x) - y) ^ 2) +
+           sum((exp(- b * x) - exp(- c * x) - y) ^ 2) +
+           sum((exp(- c * x) - exp(- d * x) - y) ^ 2) + a)
   }
-  one <- function(v){ return (1)}
+  result.saddle.free.newton <- OptimizeFunction(NonConvexFunction,
+                                              500,
+                                              4,
+                                              0.00001,
+                                              0.000001,
+                                              0.1,
+                                              function(v) {1},
+                                              "SFN")
+  result.gradient.descent <- OptimizeFunction(NonConvexFunction,
+                                             5000,
+                                             4,
+                                             0.00001,
+                                             0.000001,
+                                             0.1,
+                                             function(v) {1},
+                                             "GD")
+  assert_that(NonConvexFunction(result.saddle.free.newton) < NonConvexFunction(result.gradient.descent))
+
   point.container <- pointContainer(p = c(1,1,1),
-                                    L = DistanceToPoint,
+                                    L = function(v){return ((v[1] + 0.1) ^ 2 + v[2] ^ 2 - (v[3] - 0.1) ^ 2)},
                                     input.dimension = 3,
                                     epsilon.shift.input = 0.0001,
-                                    EdgeDistance = one)
-
-  direction.curvature <- DirectionCurvature(point.container, c(1.0, 1.0, 1.0))
-  print(direction.curvature)
+                                    EdgeDistance = function(v) {1})
+  assert_that(abs(DirectionCurvature(point.container, c(1.0, 0.0, 0.0)) - 2.0) < 0.000001)
+  assert_that(abs(DirectionCurvature(point.container, c(1.0, 1.0, 0.0)) - 2.0) < 0.000001)
+  assert_that(abs(DirectionCurvature(point.container, c(0.0, 0.0, 1.0)) + 2.0) < 0.000001)
+  assert_that(abs(DirectionCurvature(point.container, c(1.0, 1.0, 1.0)) - 2.0 /3.0) < 0.000001)
 }
 
 TestKrylov <- function(){
