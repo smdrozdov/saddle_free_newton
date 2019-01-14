@@ -2,7 +2,7 @@
 
 Assume f is a C2-smooth function from $U \in \mathbb{R}^n$ to $\mathbb{R}$. Given that $\argmin(f) \in \int(U)$ find $\argmin(f).$
 
-This is a common task that is usually solved by Gradient descent, and by Newton method if $f$ is convex.
+This is a common task usually solved by Gradient descent, and by Newton method if $f$ is convex.
 However, if $f$ is not convex and has saddle points, these saddle points are attractors for Gradient descent process, which very often stops method from converging to the real minimum.
 Moreover, if $n$ grows, saddle points usually become the only obstacle for Gradient descent, because probability of a function to have a local minimum drops exponentially fast.
 
