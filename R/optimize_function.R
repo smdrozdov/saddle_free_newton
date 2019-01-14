@@ -219,17 +219,29 @@ TestAll <- function(){
   assert_that(abs(DirectionCurvature(point.container, c(0.0, 0.0, 1.0)) + 2.0) < 0.000001)
   assert_that(abs(DirectionCurvature(point.container, c(1.0, 1.0, 1.0)) - 2.0 /3.0) < 0.000001)
 
-
-  resASFN <- OptimizeFunction(function(v) { ((v[1] - 0.1) ^ 2 + 2 * (v[10] + 1.0) ^ 2 + 3 * (v[15] - 1.0) ^ 2) - sin(v[1] * v[15]) ^ 2},
-                              50,
+  f <- function(v) { sum((v + 0.1) ^ 4) + v[3] ^ 6 + v[4] ^ 6 + v[5] ^ 6 - sin(v[7] * v[8]) - cos(v[1] + v[3] + v[5] + v[12] + pi / 3)}
+  resGD <- OptimizeFunction(f,
+                              3000,
                               15,
                               0.00001,
-                              0.000001,
+                              0.0000000001,
                               0.3,
+                              function(v) {1},
+                              "GD",
+                              2)
+  resASFN <- OptimizeFunction(f,
+                              300,
+                              15,
+                              0.00001,
+                              0.0000000001,
+                              0.7,
                               function(v) {1},
                               "ASFN",
                               2)
   print(resASFN)
+  print(resGD)
+  print(f(resASFN))
+  print(f(resGD))
 }
 
 
