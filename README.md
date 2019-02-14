@@ -8,7 +8,7 @@ Moreover, if $n$ grows, saddle points become the only blocker for Gradient desce
 
 In 2014 Dauphin et al. introduced and proved a novel method, that they called "Saddle-free Newton" [1]. It is designed to overcome saddle points of arbitrary function. 
 
-Though this method is proven powerful (See figure 4 in chapter 7 in [1]), a public implementation does not exist. This package is an attempt to fill this gap.
+Though this method is proven powerful both empirically (See figure 4 in chapter 7 in [1]) and theoretically, a public implementation does not exist. This package is an attempt to fill this gap.
 
 
 References:
